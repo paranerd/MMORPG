@@ -1,0 +1,536 @@
+@font-face {
+	font-family: "Minecraftia";
+	src: url(../fonts/Minecraftia.ttf);
+	font-size: 8;
+}
+
+@font-face {
+	font-family: "Pixels";
+	src: url(../fonts/Pixels.ttf);
+	font-weight: 12;
+}
+
+@font-face {
+	font-family: "PressStart";
+	src: url(../fonts/PressStart.ttf);
+	font-weight: 12;
+}
+
+@font-face {
+	font-family: "Silkscreen";
+	src: url(../fonts/Silkscreen.ttf);
+	font-weight: 12;
+}
+
+body {
+	overflow: hidden;
+	/*background-color: #663300;*/
+	background-image: url('../sprites/wallpaper.png');
+	font-family: "Minecraftia";
+}
+
+canvas {
+	display: block;
+}
+
+#logcontainer {
+	position: absolute;
+	bottom: 0;
+	height: 130px;
+	width: 200px;
+}
+
+.text {
+	width:60%;
+	height:300px;
+	padding:5px;
+	background:#444;
+	color:#c96;
+}
+
+#chatlog {
+	align: bottom;
+	position: absolute;
+	bottom: 10px;
+	left: 15px;
+	font-family: "Minecraftia";
+	font-size: 10px;
+	overflow:auto;
+	border: 1px solid black;
+	-webkit-border-radius:3px;
+	-moz-border-radius:3px;
+	border-radius:3px;
+	width:200px;
+	height:100px;
+	background-color: rgba(0, 0, 0, 0.7);
+}
+
+#message {
+	autocomplete: off;
+	position: absolute;
+	bottom: 10px;
+	left: 15px;
+	color: #c96;
+	font-family: "Minecraftia";
+	width: 210px;
+	height: 25px;
+	line-height: 25px;
+	font-size: 12px;
+	background-color: rgba(0, 0, 0, 0.8);
+	float: left;
+	-webkit-border-radius:3px;
+	-moz-border-radius:3px;
+	border-radius:3px;
+}
+
+#loginBox {
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	border-radius: 8px;
+}
+
+.slide {
+	position: absolute;
+	bottom: 0;
+}
+.slide .inner {
+	position: absolute;
+	background-color: blue;
+	bottom: 0px;
+	width: 200px;
+}
+
+body, html{
+	margin:0;
+	padding:0;
+}
+
+#slidebottom {
+	position:absolute;
+	bottom:0;
+}
+
+#thebutton {
+	position: absolute;
+	bottom: 0;
+	left: 220px;
+}
+
+#logout {
+	font-family: "Minecraftia";
+	position: absolute;
+	bottom: 0;
+	left: 250px;
+}
+
+#playerLevelBg {
+	position: absolute;
+	margin-top: 5px;
+	margin-left: 15px;
+	height: 32px;
+	width: 32px;
+}
+
+#playerLevel {
+	position: absolute;
+	margin-top: 7px;
+	margin-left: 17px;
+	height: 32px;
+	width: 32px;
+	color: white;
+	text-align: center;
+	line-height: 30px;
+	font-family: "Minecraftia";
+	font-size: 14px;
+}
+
+#playerExperienceBorder {
+	position: absolute;
+	margin-top: 35px;
+	margin-left: 55px;
+	border-bottom: solid 1px white;
+	border-right: solid 1px white;
+	width: 150px;
+	height: 3px;
+}
+
+#playerExperience {
+	position: absolute;
+	margin-top: 34px;
+	margin-left: 55px;
+	background-color: #00EEEE;
+	width: 150px;
+	height: 3px;
+	text-align: center;
+	line-height: 30px;
+	font-family: "Minecraftia";
+	font-size: 12px;
+}
+
+#pName {
+	position: absolute;
+	margin-top: 5px;
+	margin-left: 55px;
+	color: white;
+	height: 32px;
+	width: 32px;
+	font-size: 14px;
+	font-family: "Minecraftia", sans-serif;
+	font-weight: bold;
+	line-height: 32px;
+}
+
+.heartImg {
+	position: absolute;
+	margin-left: -129px;
+	clip:rect(0px 160px 32px 128px); /* rect(oben | rechts | unten | links) */
+}
+
+#playerCoins {
+	position: absolute;
+	margin-top: 80px;
+	margin-left: 15px;
+	width: 32px;
+	height: 32px;
+}
+
+#coins {
+	position: absolute;
+	margin-top: 87px;
+	margin-left: 57px;
+	width: 150px;
+	height: 10px;
+	color: #FFB90F; /* gold */
+}
+
+.coinImg {
+	position: absolute;
+	margin-left: -160px;
+	clip:rect(0px 192px 32px 160px);
+}
+
+#playerHeart {
+	position: absolute;
+	margin-top: 45px;
+	margin-left: 15px;
+	width: 32px;
+	height: 32px;
+}
+
+#health {
+	position: absolute;
+	margin-top: 52px;
+	margin-left: 57px;
+	background-color: red;
+	height: 10px;
+	width: 148px;
+	z-index: 1;
+}
+
+#playerHealthBorder {
+	position: absolute;
+	margin-top: 50px;
+	margin-left: 55px;
+	border: solid 1px white;
+	background-color: rgba(0,0,0,0.4);
+	height: 12px;
+	width: 150px;
+	z-index: 1;
+}
+
+#mana {
+	position: absolute;
+	margin-top: 24px;
+	margin-left: 52px;
+	background-color: blue;
+	height: 10px;
+	width: 150px;
+	z-index: 1;
+}
+
+#playerManaBorder {
+	position: absolute;
+	margin-top: 22px;
+	margin-left: 50px;
+	border: solid 2px;
+	border-color: white;
+	height: 10px;
+	width: 150px;
+	z-index: 1;
+}
+
+#enemyLevel {
+	position: absolute;
+	margin-top: 5px;
+	right: 15px;
+	color: white;
+	height: 30px;
+	width: 30px;
+	font-family: "Minecraftia";
+	font-size: 14px;
+	text-align: center;
+	line-height: 30px;
+}
+
+#enemyHeart {
+	position: absolute;
+	margin-top: 45px;
+	right: 15px;
+	width: 32px;
+	height: 32px;
+}
+
+#enemyName {
+	position: absolute;
+	margin-top: 5px;
+	right: 55px;
+	color: white;
+	height: 32px;
+	width: 32px;
+	font-size: 14px;
+	font-family: "Minecraftia", sans-serif;
+	font-weight: bold;
+	line-height: 32px;
+}
+
+#enemyHealth {
+	position: absolute;
+	margin-top: 52px;
+	right: 57px;
+	background-color: red;
+	height: 10px;
+	width: 148px;
+	z-index: 1;
+}
+
+#enemyHealthBorder {
+	position: absolute;
+	margin-top: 50px;
+	right: 55px;
+	border: solid 1px white;
+	height: 12px;
+	width: 150px;
+	z-index: 1;
+}
+
+.hideClass {
+	visibility: hidden;
+}
+
+#fps {
+	position: absolute;
+	margin-top: 10px;
+	margin-left: 500px;
+	bottom: 0;
+	right: 0;
+	color: white;
+	text-align: right;
+	font-size: 12px;
+	line-height: 14px;
+}
+
+#kontrolle {
+	position: absolute;
+	right: 0px;
+	bottom: 20px;
+	text-align: right;
+	color: white;
+	font-size: 12px;
+	line-height: 14px;
+}
+
+#playerName {
+	font-family: "Minecraftia";
+	autocomplete: off;
+}
+
+#gameArea {
+	width: 640px;
+	height: 640px;
+	overflow: hidden;
+	position: absolute;
+	font-family: "Minecraftia";
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	border-radius: 8px;
+}
+
+#bgDiv {
+	z-index: 0;
+	position: absolute;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	border-radius: 8px;
+}
+
+#gameCanvas {
+	z-index: 0;
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	font-family: "Minecraftia";
+	font-size: 20px;
+}
+
+#bgCanvas {
+	z-index: 0;
+	position: absolute;
+}
+
+#mapCanvas {
+	position: absolute;
+	-moz-border-radius: 8px 8px 8px 8px;
+	-webkit-border-radius: 8px 8px 8px 8px;
+	border-radius: 8px;
+}
+
+#submitButton {
+	font-family: "Minecraftia";
+}
+
+#conversation {
+	position: absolute;
+	text-align: center;
+	border-radius: 4px;
+	background-color: rgba(0,0,0,0.5);
+	width: 400px;
+	height: 100px;
+	top: 550px;
+	left: 100px;
+}
+
+#convText {
+	position: absolute;
+	border-radius: 4px;
+	padding-left: 10px;
+	padding-top: 10px;
+	width: 240px;
+	height: 80px;
+	top: 5px;
+	left: 5px;
+	font-size: 12px;
+	color: white;
+	background-color: rgba(0,0,0,0.5);
+}
+
+#convButton1 {
+	position: absolute;
+	text-align: center;
+	line-height: 30px;
+	border-radius: 4px;
+	padding-left: 5px;
+	width: 130px;
+	height: 30px;
+	top: 5px;
+	left: 260px;
+	font-size: 12px;
+	color: white;
+	background-color: rgba(0,0,0,0.5);
+}
+
+#confirmation {
+	position: absolute;
+	color: #FFB90F;
+	text-align: center;
+	border-radius: 4px;
+	background-color: rgba(0,0,0,0.3);
+	width: 400px;
+	height: 100px;
+	top: 550px;
+	left: 100px;
+}
+
+#yes {
+	position: absolute;
+	border-radius: 4px;
+	height: 30px;
+	width: 100px;
+	left: 100px;
+	top: 40px;
+	text-align: center;
+	line-height: 30px;
+	color: limegreen;
+	background-color: rgba(0,0,0,0.5);
+}
+
+#no {
+	position: absolute;
+	border-radius: 4px;
+	height: 30px;
+	width: 100px;
+	left: 210px;
+	top: 40px;
+	color: red;
+	margin: 0 auto;
+	text-align: center;
+	line-height: 30px;
+	background-color: rgba(0,0,0,0.5);
+}
+
+#inventoryContainer {
+	position: absolute;
+	top: 350px;
+	left: 15px;
+	width: 300px;
+	height: 200px;
+	background-color: rgba(0,0,0,0.7);
+}
+
+.invBoxIndex {
+	position: relative;
+	width: 10px;
+	height: 10px;
+	top: 40px;
+	left: 40px;
+	font-size: 10px;
+	color: white;
+}
+
+.invBox {
+	position: relative;
+	height: 50px;
+	width: 50px;
+	float: left;
+}
+
+#gameArea {
+	position: absolute;
+	width: 640px;
+	height: 640px;
+	overflow: hidden;
+	font-family: "Minecraftia";
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	border-radius: 8px;
+}
+
+#mapButton {
+	position: absolute;
+	background-image: url(../sprites/map.png);
+	height: 32px;
+	width: 32px;
+	top: 0px;
+}
+
+#questButton {
+	position: absolute;
+	background-image: url(../sprites/quest.png);
+	height: 32px;
+	width: 32px;
+}
+
+#questMenu {
+	position: absolute;
+	padding: 5px;
+	color: #FFB90F;
+	border-radius: 4px;
+	background-color: rgba(0,0,0,0.8);
+	height: 400px;
+	width: 400px;
+}
+
+#details {
+	position: absolute;
+	font-size: 8px;
+	color: white;
+}

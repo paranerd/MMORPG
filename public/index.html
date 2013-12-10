@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+	<title> MMORPG </title>
+	<meta charset="utf-8"/>
+	<link rel="icon" type="image/png" href="sprites/favicon.png">
+	<link rel="shortcut icon" type="image/png" href="sprites/favicon.png">
+	<link rel="shortcut icon" href="sprites/favicon.ico" type="image/x-icon" />
+	<link rel="icon" href="sprites/favicon.ico" type="image/x-icon" />
+		
+	<link rel="stylesheet" href="style/reset.css"/>
+	<link rel="stylesheet" href="style/game.css"/>
+	<link rel="stylesheet" href="style/jquery.mCustomScrollbar.css"/>
+</head>
+	
+<body>
+<div id="gameContainer" class="hideClass">
+	<!-- Game area -->
+	<div id="gameArea">
+		<div id="bgDiv">
+			<canvas id="bgCanvas"></canvas>
+		</div>
+		<canvas id="gameCanvas"></canvas>
+	</div>
+
+	<div id="mapButton"></div>
+	<div id="questButton"></div>
+	<canvas id="mapCanvas" class="hideClass"></canvas>
+
+	<div id="questMenu" class="hideClass"></div>
+
+	<div id="conversation" class="hideClass">
+		<div id="convText"></div>
+		<div id="convButton1"></div>
+	</div>
+
+	<div id="confirmation" class="hideClass"></br>Accept Quest?
+		<div id="yes">Yes</div>
+		<div id="no">No</div>
+	</div>
+
+	<!-- Helpers -->
+	<div id="kontrolle"></div>
+	<div id="fps"></div>
+
+	<!-- Chat -->
+	<div id="chatlog" class="text"></div>
+	<input type="text" id="message" class="hideClass">
+
+	<input id="logout" type="submit" value="Logout"/>
+	<input id="thebutton" type="image" src="sprites/message_log_down.png" alt="Absenden"></td>
+
+	<!-- Player stats -->
+	<div id="playerLevelBg"></div>
+	<div id="playerExperienceBorder"></div>
+	<div id="playerExperience"></div>
+	<div id="playerLevel"></div>
+	<div id="pName"></div>
+	<div id="playerHeart"><img class="heartImg" src="sprites/spritesheet.png"></img></div>
+	<div id="playerHealthBorder"></div>
+	<div id="health"></div>
+	<div id="playerCoins"><img class="coinImg" src="sprites/spritesheet.png"></img></div>
+	<div id="coins"></div>
+	<!--<div id="playerManaBorder"></div>
+	<div id="mana"></div>-->
+
+	<div id="inventoryContainer"></div>
+	<div id="details" class="hideClass"></div>
+
+	<!-- Enemy stats -->
+	<div id="enemyLevel" class="hideClass"></div>
+	<div id="enemyName" class="hideClass">Bat</div>
+	<div id="enemyHeart" class="hideClass"><img class="heartImg" src="sprites/spritesheet.png"></img></div>
+	<div id="enemyHealthBorder" class="hideClass"></div>
+	<div id="enemyHealth" class="hideClass"></div>
+</div>
+		
+	<script src="http://paranerd.dyndns.org:8000/socket.io/socket.io.js"></script>
+	<!--<script src="http://127.0.0.1:8000/socket.io/socket.io.js"></script>-->
+	<!--<script src="http://192.168.178.27:8000/socket.io/socket.io.js"></script>-->
+	<script src="js/requestAnimationFrame.js"></script>
+	<script src="js/underscore-min.js"></script>
+	<script src="js/Class.js"></script>
+	<script src="js/SoundManager.js"></script>
+	<script src="js/Pathfinder.js"></script>
+	<script src="js/Player.js"></script>
+	<script src="js/Enemy.js"></script>
+	<script src="js/Person.js"></script>
+	<script src="js/Npc.js"></script>
+	<script src="js/Quests.js"></script>
+	<script src="js/game.js"></script>
+	<script src="js/jquery-1.8.3.min.js"></script>
+	<script src="js/jstorage.js"></script>
+	<script src="js/tabslidedown.js"></script>
+	<script src="js/jquery.mCustomScrollbar.concat.min.js"></script>
+
+	<script>
+		(function($){
+			$(window).load(function(){
+				$(".text").mCustomScrollbar({
+					autoHideScrollbar: true,
+				});
+			});
+		})(jQuery);
+
+		// Initialise the game
+		var pName = $.jStorage.get("pName");
+		init();
+	</script>
+</body>
+</html>
