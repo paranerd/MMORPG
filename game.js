@@ -1,14 +1,26 @@
 /**************************************************
 ** NODE.JS REQUIREMENTS
 **************************************************/
-var util = require("util"),					// Utility resources (logging, object inspection, etc)
+/*var util = require("util"),					// Utility resources (logging, object inspection, etc)
 	io = require("socket.io").listen(8000),				// Socket.IO
+	Player = require("./Player").Player,	// Player class
+	Enemy = require("./Enemy").Enemy,	// Enemy class
+	Level = require("./Level").Level,
+	db = require('mongojs').connect('localhost/mongoapp', ['users']),
+	Npc = require("./Npc").Npc;*/
+
+var util = require("util"),					// Utility resources (logging, object inspection, etc)
+	express = require('express'),
+	app = express(),
+	port = 8000,
 	Player = require("./Player").Player,	// Player class
 	Enemy = require("./Enemy").Enemy,	// Enemy class
 	Level = require("./Level").Level,
 	db = require('mongojs').connect('localhost/mongoapp', ['users']),
 	Npc = require("./Npc").Npc;
 
+app.use(express.static(__dirname + '/public'));
+var io = require('socket.io').listen(app.listen(port));
 
 /**************************************************
 ** GAME VARIABLES
@@ -188,13 +200,13 @@ function init() {
 	}
 
 	// Configure Socket.IO
-	io.configure(function() {
+	/*io.configure(function() {
 		// Only use WebSockets
 		io.set("transports", ["websocket"]);
 
 		// Restrict log output
 		io.set("log level", 2);
-	});
+	});*/
 
 	// Start listening for events
 	setEventHandlers();
@@ -244,8 +256,8 @@ function onPlayerConnect(data) {
 		if(err || !savedUser) {
 			console.log("User "+data.playername+" not in db");
 			toClient.emit("no player");
-			return;
-			/*var player = new Player(128, 192, data.playerName, 100);
+			//return;
+			var player = new Player(128, 192, data.playerName, 100);
 			db.users.save(player, function(err2, savedUser2) {
 				if(err2 || !savedUser2) {
 					console.log("User not saved because of error" + err2);
@@ -253,7 +265,7 @@ function onPlayerConnect(data) {
 				else {
 					console.log("User saved");
 				}
-			});*/
+			});
 		}
 		else {
 			toClient.emit("validated");
@@ -381,8 +393,10 @@ var playerFightLoop = setInterval(function() {
 }, 16);
 
 var calculateDamage = function(att, def) {
-	var damage = Math.floor(Math.random()*(att - def - 8) + (att - def));
+	// Math.random() * (max - min + 1) + min;
+	var damage = Math.floor((Math.random()*((att - def) - (att - def - 8))) + (att - def - 8));
 	if(damage < 0) damage = 0;
+	console.log(att+" "+def+" "+damage);
 	return damage;
 }
 
@@ -434,8 +448,8 @@ function onLogout(data) {
 
 // Socket client has disconnected
 function onClientDisconnect() {
-	util.log("Player has disconnected: "+this.id);
-	this.emit("disconnect");
+	//util.log("Player has disconnected: "+this.id);
+	//this.emit("disconnect");
 };
 
 // Player has moved

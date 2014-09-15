@@ -24,20 +24,13 @@
 
 body {
 	overflow: hidden;
-	/*background-color: #663300;*/
+	/*background-color: #000;*/
 	background-image: url('../sprites/wallpaper.png');
 	font-family: "Minecraftia";
 }
 
 canvas {
 	display: block;
-}
-
-#logcontainer {
-	position: absolute;
-	bottom: 0;
-	height: 130px;
-	width: 200px;
 }
 
 .text {
@@ -63,6 +56,7 @@ canvas {
 	width:200px;
 	height:100px;
 	background-color: rgba(0, 0, 0, 0.7);
+	/*background-image: url(../sprites/chatlog.png);*/
 }
 
 #message {
@@ -221,9 +215,9 @@ body, html{
 	position: absolute;
 	margin-top: 52px;
 	margin-left: 57px;
-	background-color: red;
+	background-color: #ed1c24;
 	height: 10px;
-	width: 148px;
+	width: 146px;
 	z-index: 1;
 }
 
@@ -231,11 +225,12 @@ body, html{
 	position: absolute;
 	margin-top: 50px;
 	margin-left: 55px;
-	border: solid 1px white;
-	background-color: rgba(0,0,0,0.4);
-	height: 12px;
+	/*border: solid 1px white;
+	background-color: rgba(0,0,0,0.4);*/
+	background-image: url(../sprites/health_border.png);
+	height: 14px;
 	width: 150px;
-	z-index: 1;
+	z-index: 2;
 }
 
 #mana {
@@ -345,35 +340,38 @@ body, html{
 }
 
 #gameArea {
-	width: 640px;
-	height: 640px;
+	width: 645px;
+	height: 645px;
 	overflow: hidden;
 	position: absolute;
 	font-family: "Minecraftia";
 	-moz-border-radius: 8px;
 	-webkit-border-radius: 8px;
 	border-radius: 8px;
+	background-image: url(../sprites/canvas_bg.png);
+	z-index: 3;
 }
 
 #bgDiv {
-	z-index: 0;
 	position: absolute;
+	left: 5px;
+	top: 5px;
+	z-index: 1;
 	-moz-border-radius: 8px;
 	-webkit-border-radius: 8px;
 	border-radius: 8px;
 }
 
 #gameCanvas {
-	z-index: 0;
+	z-index: 1;
 	position: absolute;
-	left: 0px;
 	top: 0px;
 	font-family: "Minecraftia";
 	font-size: 20px;
 }
 
 #bgCanvas {
-	z-index: 0;
+	z-index: 1;
 	position: absolute;
 }
 
@@ -382,6 +380,7 @@ body, html{
 	-moz-border-radius: 8px 8px 8px 8px;
 	-webkit-border-radius: 8px 8px 8px 8px;
 	border-radius: 8px;
+	z-index: 4;
 }
 
 #submitButton {
@@ -473,7 +472,8 @@ body, html{
 	left: 15px;
 	width: 300px;
 	height: 200px;
-	background-color: rgba(0,0,0,0.7);
+	/*background-color: rgba(0,0,0,0.7);*/
+	background-image: url(../sprites/inventory_cont.png);
 }
 
 .invBoxIndex {
@@ -521,10 +521,12 @@ body, html{
 
 #questMenu {
 	position: absolute;
+	z-index: 4;
 	padding: 5px;
 	color: #FFB90F;
 	border-radius: 4px;
-	background-color: rgba(0,0,0,0.8);
+	/*background-color: rgba(0,0,0,0.8);*/
+	background-image: url(../sprites/quest_bg.png);
 	height: 400px;
 	width: 400px;
 }

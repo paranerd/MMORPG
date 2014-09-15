@@ -12,6 +12,7 @@ var Player = Class.extend({
 		this.playerLevel = 1;
 		this.levelBorders = [0, 5, 15, 30, 50];
 		this.dir = 2;
+		this.frame = 0;
 		this.alive = true;
 		this.maxhp = 100;
 		this.xp = 0;
@@ -50,6 +51,7 @@ var Player = Class.extend({
 		this.conversation = [];
 		this.lastHitPointUpdate = Date.now();
 		this.lastHitUpdate = Date.now();
+		this.lastFrameUpdate = Date.now();
 		this.conversation = [];
 		this.openQuests = [];
 		this.closedQuests = [];
@@ -59,7 +61,8 @@ var Player = Class.extend({
 
 		// Sprites
 		this.playersprite = new Image();
-		this.playersprite.src = 'sprites/playersprite_fight.png';
+		//this.playersprite.src = 'sprites/playersprite_fight.png';
+		this.playersprite.src = 'sprites/player_complete.png';
 		this.spritesheet = new Image();
 		this.spritesheet.src = 'sprites/spritesheet.png';
 
@@ -282,7 +285,7 @@ var Player = Class.extend({
 			healthWidth = this.healthWidth,
 			playerLevel = this.playerLevel;
 		// Health
-		var healthWidth = 148*(this.currhp/this.maxhp) + "px";
+		var healthWidth = 146*(this.currhp/this.maxhp) + "px";
 		$("#health").width(healthWidth);
 		$("#coins").html(money);
 		$("#playerLevel").html(playerLevel);
@@ -629,18 +632,35 @@ var Player = Class.extend({
 		$("#conversation").addClass("hideClass");
 	},
 
+	nextFrame: function() {
+		if(this.frame < 3) {
+			this.frame++;
+		}
+		else {
+			this.frame = 0;
+		}
+	},
+
 	// Draw
 	draw: function(ctx, cXnull, cYnull) {
+		if(this.moving && (Date.now() - this.lastFrameUpdate > 150)) {
+			this.lastFrameUpdate = Date.now();
+			this.nextFrame();
+		}
+		else if(!this.moving) {
+			this.frame = 0;
+		}
 		//console.log("Draw player");
 		ctx.fillStyle = "#FFF";
 		ctx.font = "9pt Minecraftia";
 		ctx.fillText(this.playerName, this.absPos["absX"] + cXnull, this.absPos["absY"] + cYnull-10);
-		if(this.mode == 0) {
+		/*if(this.mode == 0) {
 			ctx.drawImage(this.playersprite, this.dir*44, this.mode, 44, 44, this.absPos["absX"] + cXnull, this.absPos["absY"] + cYnull, 32, 32);
 		}
 		else if(this.mode == 1) {
 			ctx.drawImage(this.playersprite, this.fightFrame*44, this.mode*44, 44, 44, this.absPos["absX"] + cXnull-5, this.absPos["absY"] + cYnull-5, 32, 32);
-		}
+		}*/
+		ctx.drawImage(this.playersprite, this.frame*42, this.dir*43, 42, 43, this.absPos["absX"] + cXnull, this.absPos["absY"] + cYnull, 32, 32);
 	
 		var hitDelta = Date.now() - this.lastHitPointUpdate;
 		

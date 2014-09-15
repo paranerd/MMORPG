@@ -1,0 +1,13 @@
+{
+	"name": "MMORPG",
+	"version": "0.0.1",
+	"private": true,
+	"dependencies": {
+		"express": "~4.9.0",
+		"socket.io": "~1.1.0",
+		"mongojs": "~0.14.1"
+	},
+	"engines": {
+		"node": "0.10.x"
+	}
+}

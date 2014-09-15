@@ -37,8 +37,9 @@ function init() {
 
 
 	// Initialise socket connection
-	//socket = io.connect("http://127.0.0.1", {port: 8000, transports: ["websocket"]});
-	socket = io.connect("http://paranerd.dyndns.org", {port: 8000, transports: ["websocket"]});
+	//socket = io.connect("http://127.0.0.1", {port: 8010, transports: ["websocket"]});
+	socket = io.connect('http://localhost:8000');
+	//socket = io.connect("http://paranerd.dyndns.org", {port: 8000, transports: ["websocket"]});
 	//socket = io.connect("http://192.168.178.27", {port: 8000, transports: ["websocket"]});
 
 	// Start listening for events
@@ -111,6 +112,7 @@ var setEventHandlers = function() {
 
 function startGame() {
 	playerName = sessionStorage.playerName;
+	console.log("PLAYER: " + playerName);
 	$("#pName").html(playerName);
 
 	playersprite = new Image();
