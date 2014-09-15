@@ -20,7 +20,7 @@ var Player = cls.extend({
 		this.fighting = false;
 		this.strength = 50;
 		this.lastStrike = 0;
-		this.hitSpeed = 1000;
+		this.hitSpeed = 500;
 		this.playerAttacksEnemyID = null;
 		this.id = id;
 	},

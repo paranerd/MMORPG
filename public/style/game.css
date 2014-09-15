@@ -50,28 +50,27 @@ canvas {
 	font-size: 10px;
 	overflow:auto;
 	border: 1px solid black;
-	-webkit-border-radius:3px;
-	-moz-border-radius:3px;
 	border-radius:3px;
-	width:200px;
-	height:100px;
+	width: 250px;
+	height: 100px;
 	background-color: rgba(0, 0, 0, 0.7);
 	/*background-image: url(../sprites/chatlog.png);*/
 }
 
 #message {
-	autocomplete: off;
 	position: absolute;
-	bottom: 10px;
-	left: 15px;
+	right: 10px;
+	autocomplete: off;
+	top: 10px;
 	color: #c96;
 	font-family: "Minecraftia";
 	width: 210px;
-	height: 25px;
+	height: 20px;
 	line-height: 25px;
 	font-size: 12px;
 	background-color: rgba(0, 0, 0, 0.8);
 	float: left;
+	border: 1px solid #EEEEEE;
 	-webkit-border-radius:3px;
 	-moz-border-radius:3px;
 	border-radius:3px;
@@ -110,11 +109,16 @@ body, html{
 	left: 220px;
 }
 
-#logout {
-	font-family: "Minecraftia";
+#bLogout {
 	position: absolute;
-	bottom: 0;
-	left: 250px;
+	top: 110px;
+	right: 10px;
+	height: 32px;
+	width: 32px;
+	background-image: url('../sprites/quit.png');
+	background-size: 80% auto;
+	background-position: 50%;
+	background-repeat: no-repeat;
 }
 
 #playerLevelBg {
@@ -225,8 +229,6 @@ body, html{
 	position: absolute;
 	margin-top: 50px;
 	margin-left: 55px;
-	/*border: solid 1px white;
-	background-color: rgba(0,0,0,0.4);*/
 	background-image: url(../sprites/health_border.png);
 	height: 14px;
 	width: 150px;
@@ -294,7 +296,7 @@ body, html{
 	right: 57px;
 	background-color: red;
 	height: 10px;
-	width: 148px;
+	width: 146px;
 	z-index: 1;
 }
 
@@ -302,10 +304,10 @@ body, html{
 	position: absolute;
 	margin-top: 50px;
 	right: 55px;
-	border: solid 1px white;
-	height: 12px;
+	height: 14px;
 	width: 150px;
-	z-index: 1;
+	z-index: 2;
+	background-image: url(../sprites/health_border.png);
 }
 
 .hideClass {
@@ -345,20 +347,15 @@ body, html{
 	overflow: hidden;
 	position: absolute;
 	font-family: "Minecraftia";
-	-moz-border-radius: 8px;
-	-webkit-border-radius: 8px;
-	border-radius: 8px;
-	background-image: url(../sprites/canvas_bg.png);
+	border: 2px solid #EEEEEE;
 	z-index: 3;
 }
 
 #bgDiv {
 	position: absolute;
-	left: 5px;
-	top: 5px;
+	/*left: 5px;
+	top: 5px;*/
 	z-index: 1;
-	-moz-border-radius: 8px;
-	-webkit-border-radius: 8px;
 	border-radius: 8px;
 }
 
@@ -396,6 +393,7 @@ body, html{
 	height: 100px;
 	top: 550px;
 	left: 100px;
+	z-index: 4;
 }
 
 #convText {
@@ -437,6 +435,7 @@ body, html{
 	height: 100px;
 	top: 550px;
 	left: 100px;
+	z-index: 4;
 }
 
 #yes {
@@ -491,6 +490,8 @@ body, html{
 	height: 50px;
 	width: 50px;
 	float: left;
+	background-position: 50%;
+	background-repeat: no-repeat;
 }
 
 #gameArea {
@@ -499,8 +500,6 @@ body, html{
 	height: 640px;
 	overflow: hidden;
 	font-family: "Minecraftia";
-	-moz-border-radius: 8px;
-	-webkit-border-radius: 8px;
 	border-radius: 8px;
 }
 
@@ -509,7 +508,8 @@ body, html{
 	background-image: url(../sprites/map.png);
 	height: 32px;
 	width: 32px;
-	top: 0px;
+	top: 147px;
+	right: 10px;
 }
 
 #questButton {
@@ -517,6 +517,8 @@ body, html{
 	background-image: url(../sprites/quest.png);
 	height: 32px;
 	width: 32px;
+	top: 184px;
+	right: 10px;
 }
 
 #questMenu {
@@ -535,4 +537,16 @@ body, html{
 	position: absolute;
 	font-size: 8px;
 	color: white;
+}
+
+#input {
+	position: absolute;
+	top: 200px;
+	left: 200px;
+	height: 40px;
+	width: 350px;
+	color: #EEEEEE;
+	background-color: rgba(0,0,0,0.6);
+	border-radius: 3px;
+	z-index: 4;
 }

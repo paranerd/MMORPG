@@ -34,8 +34,6 @@ var canvas,		// Canvas DOM element
 ** GAME INITIALISATION
 **************************************************/
 function init() {
-
-
 	// Initialise socket connection
 	//socket = io.connect("http://127.0.0.1", {port: 8010, transports: ["websocket"]});
 	socket = io.connect('http://localhost:8000');
@@ -53,7 +51,7 @@ function init() {
 var setEventHandlers = function() {
 	// Keyboard
 	document.getElementById("message").addEventListener("keydown", localMessage, false);
-	document.getElementById("logout").addEventListener("mousedown", logout, false);
+	document.getElementById("bLogout").addEventListener("mousedown", logout, false);
 
 	$("#mapButton").click(function() {toggleMap()});
 	$("#questButton").click(function() {toggleQuests()});
@@ -459,13 +457,13 @@ document.onkeyup = function(e)
 		}
 		// Show chat-input-prompt on "Return"
 		else if(e.keyCode == 13) {
-			if($("#message").hasClass("hideClass")) {
-				$("#message").removeClass("hideClass");
+			if($("#input").hasClass("hideClass")) {
+				$("#input").removeClass("hideClass");
 				$("#message").focus();
 			}
 			else {
 				$("#message").blur();
-				$("#message").addClass("hideClass");
+				$("#input").addClass("hideClass");
 			}
 		}
 	}
@@ -579,36 +577,30 @@ function onResize(e) {
 	//canvas.height = window.innerHeight;
 
 		$('#gameArea').css({
-			position:'absolute',
 			left: ($(window).width() - $('#gameArea').outerWidth())/2,
 			top: ($(window).height() - $('#gameArea').outerHeight())/2
 		});
-		$('#mapButton').css({
-			left: (parseInt($('#gameArea').css('left'))+$('#gameArea').width()+5),
-			top: $('#gameArea').css('top')
-		});
-		$('#questButton').css({
-			left: (parseInt($('#gameArea').css('left'))+$('#gameArea').width()+5),
-			top: (parseInt($('#mapButton').css('top'))+$('#mapButton').height()+10)
+		$('#input').css({
+			left: ($(window).width() - $('#input').outerWidth())/2,
+			top: ($(window).height() - $('#input').outerHeight())/1.2
 		});
 		$('#questMenu').css({
 			left: ($(window).width() - $('#questMenu').outerWidth())/2,
 			top: ($(window).height() - $('#questMenu').outerHeight())/2
 		});
-		$('#conversation').css({
-			position:'absolute',
-			left: ($(window).width() - $('#conversation').outerWidth())/2,
-		});
+
 		$('#confirmation').css({
 			left: ($(window).width() - $('#conversation').outerWidth())/2,
 		});
 		adjustedTileSize = Math.floor(window.innerHeight/worldSize);
 		$('#mapCanvas').css({
-			position:'absolute',
 			left: ($(window).width() - adjustedTileSize * worldSize)/2,
 			top: ($(window).height() - adjustedTileSize * worldSize)/2,
 			width: adjustedTileSize * worldSize,
 			height: adjustedTileSize * worldSize
+		});
+		$('#conversation').css({
+			left: ($(window).width() - $('#conversation').outerWidth())/2,
 		});
 		mapCanvas.width = adjustedTileSize * worldSize;	
 		mapCanvas.height = adjustedTileSize * worldSize;

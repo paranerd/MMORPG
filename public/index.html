@@ -24,8 +24,6 @@
 		<canvas id="gameCanvas"></canvas>
 	</div>
 
-	<div id="mapButton"></div>
-	<div id="questButton"></div>
 	<canvas id="mapCanvas" class="hideClass"></canvas>
 
 	<div id="questMenu" class="hideClass"></div>
@@ -46,10 +44,15 @@
 
 	<!-- Chat -->
 	<div id="chatlog" class="text"></div>
-	<input type="text" id="message" class="hideClass">
+	<div id="input" class="hideClass">
+		<div style="position: absolute; left: 10px; line-height: 40px;">Message:</div>
+		<input type="text" id="message" >
+	</div>
 
-	<input id="logout" type="submit" value="Logout"/>
-	<input id="thebutton" type="image" src="sprites/message_log_down.png" alt="Absenden"></td>
+	<div id="bLogout"></div>
+	<div id="mapButton"></div>
+	<div id="questButton"></div>
+	<!--<input id="thebutton" type="image" src="sprites/message_log_down.png" alt="Absenden"></td>-->
 
 	<!-- Player stats -->
 	<div id="playerLevelBg"></div>

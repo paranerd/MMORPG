@@ -25,7 +25,7 @@ var Player = Class.extend({
 		this.path = [[]];
 		this.speed = 200;
 		this.mode = 0, // 0 = normal, 1 = fighting;
-		this.hitSpeed = 1000;
+		this.hitSpeed = 500;
 		this.lastStrike = 0;
 		this.moveInterrupt = false;
 		this.stepCount = 0;
@@ -143,6 +143,7 @@ var Player = Class.extend({
 	},
 
 	questConfirmationPending: function(questID, status, type, id, target, amount, itemReward, coinReward, shortDesc) {
+		console.log("questConfirmationPending");
 		this.pendingQuest = [questID, status, type, id, target, amount, itemReward, coinReward, false, shortDesc];
 		this.waitForQuestConfirmation = true;
 	},
@@ -299,7 +300,7 @@ var Player = Class.extend({
 		var inventory = this.inventory;
 		var boxID = ($(box).attr("id").substring(3));
 			if(this.inventory[boxID] != null) {
-			if(this.inventory[boxID][0] == 0) {
+			if(this.inventory[boxID][0] == 0 && this.currhp < this.maxhp) {
 				this.sound.playSound("potion");
 				this.currhp+=20;
 				if(this.currhp > this.maxhp) {
@@ -563,6 +564,7 @@ var Player = Class.extend({
 					else if(this.goToNpc) {
 						this.goToNpc = false;
 						$("#conversation").removeClass("hideClass");
+						console.log("Unhide conversation");
 						this.convPos = 0;
 						this.talk();
 						this.dir = this.finalDir;
@@ -608,6 +610,7 @@ var Player = Class.extend({
 	showQuestConfDialog: function() {
 		var self = this;
 		//$("#questConfirmation").removeClass("hideClass");
+		console.log("showQuestConfDialog");
 		$("#confirmation").removeClass("hideClass");
 		$("#yes").click(function() {self.confirmQuest(); $("#confirmation").addClass("hideClass");});
 		$("#no").click(function() {self.declineQuest(); $("#confirmation").addClass("hideClass");});
@@ -630,6 +633,7 @@ var Player = Class.extend({
 	stopTalking: function() {
 		this.convPos = 0;
 		$("#conversation").addClass("hideClass");
+		console.log("Hide conversation");
 	},
 
 	nextFrame: function() {

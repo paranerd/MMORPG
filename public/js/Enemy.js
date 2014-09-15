@@ -80,7 +80,7 @@ var Enemy = function(startX, startY, ID, typ) {
 		$("#enemyLevel").html(level);
 
 		// Health
-		var width = 148*(currhp/maxhp) + "px";
+		var width = 146*(currhp/maxhp) + "px";
 		$("#enemyHeart").removeClass('hideClass');
 		$("#enemyName").removeClass('hideClass');
 		$("#enemyHealthBorder").removeClass('hideClass');
