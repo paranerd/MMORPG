@@ -1,6 +1,4 @@
-/**************************************************
-** GAME VARIABLES
-**************************************************/
+// Game variables
 var canvas,		// Canvas DOM element
 	bgCanvas,	// Canvas for static background
 	ctx,		// Canvas rendering context
@@ -9,12 +7,9 @@ var canvas,		// Canvas DOM element
 	mapCtx,
 	localPlayer,	// Local player
 	remotePlayers,	// Remote players
-	enemies,	// Contains the enemies
-	quests,
-	pName,
-	items,
-	npcs,
-	playername,
+	enemies = [],	// Contains the enemies
+	items = [],
+	npcs = [],
 	playersprite,
 	spritesheet,
 	itemsprites,
@@ -24,80 +19,56 @@ var canvas,		// Canvas DOM element
 	worldSize,
 	tileSize,
 	adjustedTileSize,
-	showMap = false,
-	showQuests = false,
 	lastClicked = {x: null, y: null},
 	lastMapUpdate = Date.now(),
-	socket;		// Socket connection
+	socket,		// Socket connection
+	chatTxtClr = "#c96",
+	tellCounter = 0,
+	lastRender = Date.now(),
+	lastFpsCycle = Date.now(),
+	questlist = [],
+	bgPos = {x: 0, y: 0};
 
-/**************************************************
-** GAME INITIALISATION
-**************************************************/
-function init() {
-	// Initialise socket connection
-	//socket = io.connect("http://127.0.0.1", {port: 8010, transports: ["websocket"]});
+window.onload = function() {
+	// Initialize socket connection
 	socket = io.connect('http://localhost:8000');
-	//socket = io.connect("http://paranerd.dyndns.org", {port: 8000, transports: ["websocket"]});
-	//socket = io.connect("http://192.168.178.27", {port: 8000, transports: ["websocket"]});
 
 	// Start listening for events
 	setEventHandlers();
-	setGameClickHandler();
-};
+	
+	// Fialize chatlog scrollbar
+	simpleScroll.init("chatlog");
+}
 
-/**************************************************
-** GAME EVENT HANDLERS
-**************************************************/
+// GAME EVENT HANDLERS
 var setEventHandlers = function() {
-	// Keyboard
-	document.getElementById("message").addEventListener("keydown", localMessage, false);
-	document.getElementById("bLogout").addEventListener("mousedown", logout, false);
-
-	$("#mapButton").click(function() {toggleMap()});
-	$("#questButton").click(function() {toggleQuests()});
-
 	// Window resize
 	window.addEventListener("resize", onResize, false);
 
 	// Socket connection successful
 	socket.on("connect", onSocketConnected);
 
-	// Socket disconnection
-	socket.on("disconnect", onSocketDisconnect);
+	socket.on("update player", updatePlayer);
 
-	// Player move message received
-	socket.on("move player", onMovePlayer);
-
-	// Player removed message received
 	socket.on("remove player", onRemovePlayer);
 
-	// New enemy
-	socket.on("new enemy", onNewEnemy);
+	socket.on("new message", receiveMessage);
+	
+	socket.on("update enemy", updateEnemy);
 
-	// New message
-	socket.on("new message", onNewMessage);
-
-	socket.on("enemy hurt", onEnemyHurt);
-
-	socket.on("enemy dead", onEnemyDead);
-
-	socket.on("respawn enemy", onRespawnEnemy);
+	socket.on("update quest", updateQuest);
 
 	socket.on("player hurt", onPlayerHurt);
 
-	socket.on("player dead", onPlayerDead);
-
 	socket.on("update world", onUpdateWorld);
 
-	socket.on("new item", onNewItem);
-
-	socket.on("item taken", onItemTaken);
+	socket.on("update item", updateItem);
+	
+	socket.on("get item", getItem);
 
 	socket.on("new npc", onNewNpc);
 
 	socket.on("create localplayer", onCreateLocalPlayer);
-
-	socket.on("new remote player", onNewRemotePlayer);
 
 	socket.on("init map", onInitMap);
 
@@ -109,12 +80,8 @@ var setEventHandlers = function() {
 };
 
 function startGame() {
-	playerName = sessionStorage.playerName;
-	console.log("PLAYER: " + playerName);
-	$("#pName").html(playerName);
-
 	playersprite = new Image();
-	playersprite.src = 'sprites/playersprite.png';
+	playersprite.src = 'sprites/player_complete.png';
 	spritesheet = new Image();
 	spritesheet.src = 'sprites/spritesheet.png';
 	npcsprite = new Image();
@@ -124,16 +91,8 @@ function startGame() {
 	itemsprites.src = 'sprites/itemsprites.png';
 
 	// Background music
-	var bgMusic = new Audio("sounds/bgmusic.ogg");
+	//var bgMusic = new Audio("sounds/bgmusic.ogg");
 	//bgMusic.play();
-
-	enemies = [];
-	items = [];
-	npcs = [];
-
-	quests = new Quests();
-
-	pName = playerName;
 
 	// Declare the canvas and rendering context
 	canvas = document.getElementById("gameCanvas");
@@ -150,8 +109,8 @@ function startGame() {
 	mapCtx = mapCanvas.getContext("2d");
 
 	// Maximise the canvas
-	canvas.width = 640; //window.innerWidth;
-	canvas.height = 640; //window.innerHeight;
+	canvas.width = 640;
+	canvas.height = 640;
 	bgCanvas.width = 1184;
 	bgCanvas.height = 1184;
 
@@ -164,45 +123,41 @@ function playerNotFound() {
 };
 
 function toggleMap() {
-	if(!showMap) {
-		showMap = true;
-		$("#mapCanvas").removeClass("hideClass");
+	if ($("#mapCanvas").hasClass("hidden")) {
+		$("#mapCanvas").removeClass("hidden");
 		drawMap();
 	}
 	else {
-		$("#mapCanvas").fadeOut(250);
-		showMap = false;
+		$("#mapCanvas").addClass("hidden");
 	}
 };
 
 function toggleQuests() {
-	if(!showQuests) {
-		$("#questMenu").html("<h1>Quests</h1></br></br>");
-		var quests = localPlayer.playerQuests();
-		if(quests.length == 0) {
-			$("#questMenu").append("<p>No Quests available</p>");
-		}		
-		else {
-			for(var i = 0; i < quests.length; i += 1) {
-				$("#questMenu").append("<p>"+quests[i][9]+": "+quests[i][5]+" / "+quests[i][4]+"</p>");
-			}
+	if($("#questMenu").hasClass("hidden")) {
+		$("#questMenu").removeClass("hidden");
+		quests.innerHTML = "";
+
+		var playerquests = localPlayer.openQuests;
+		if(playerquests.length == 0) {
+			$("#quests").append("<p>No Quests available</p>");
+			return;
 		}
-		showQuests = true;
-		$("#questMenu").removeClass("hideClass");
+
+		for(var i = 0; i < playerquests.length; i++) {
+			$("#quests").append("<p>" + playerquests[i].quest.desc + ": " + playerquests[i].amount + " / " + playerquests[i].quest.target + "</p>");
+		}
 	}
 	else {
-		showQuests = false;
-		$("#questMenu").addClass("hideClass");
+		$("#questMenu").addClass("hidden");
 	}
 };
 
-function onInitCollisionMap(data) {
-	collisionMap = data.collisionMap;
+function onInitCollisionMap(map) {
+	collisionMap = map;
 };
 
-function onNewNpc(data) {
-	var newNpc = new Npc(data.x, data.y, data.id, data.quest, data.questID);
-	npcs.push(newNpc);
+function onNewNpc(npc) {
+	npcs.push(npc);
 };
 
 function onInitMap(data) {
@@ -216,154 +171,161 @@ function onInitMap(data) {
 function drawMap() {
 	var spriteNum = 0;
 	mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
-	for (var w=0; w < worldSize; w++)
-	{
-		for (var h=0; h < worldSize; h++)
-		{
+	for (var w = 0; w < worldSize; w++) {
+		for (var h = 0; h < worldSize; h++) {
 			spriteNum = renderMap[w][h];
 
 			// Draw it
-			mapCtx.drawImage(spritesheet, spriteNum*tileSize, 0, tileSize, tileSize, w*adjustedTileSize, h*adjustedTileSize, adjustedTileSize, adjustedTileSize);
+			mapCtx.drawImage(spritesheet, spriteNum * tileSize, 0, tileSize, tileSize, w * adjustedTileSize, h * adjustedTileSize, adjustedTileSize, adjustedTileSize);
 		}
 	}
-	var absPos = localPlayer.getAbsPos();
-	mapCtx.drawImage(playersprite, 88, 0, 44, 44, absPos.absX/32*adjustedTileSize, absPos.absY/32*adjustedTileSize, adjustedTileSize, adjustedTileSize);
-	$("#mapCanvas").fadeIn(500);
+
+	mapCtx.drawImage(playersprite, 0, 84, 42, 44, localPlayer.pos.x / 32 * adjustedTileSize, localPlayer.pos.y / 32 * adjustedTileSize, adjustedTileSize, adjustedTileSize);
+	$("#mapCanvas").removeClass("hidden");
 };
 
-function onItemTaken(data) {
-	console.log("Item taken, type: "+data.type);
-	if(localPlayer.getID() == data.id) {
-		localPlayer.takeItem(data.type, data.change);
-		localPlayer.displayStats();
-		// Check if player had a collecting quest
-		var playerQuests = localPlayer.playerQuests();
-		for(var i = 0; i < playerQuests.length; i += 1) {
-			if(playerQuests[i][2] == 1 && playerQuests[i][3] == data.type) {
-				if(playerQuests[i][5] < playerQuests[i][4]) {
-					localPlayer.updateQuest(i, 1);
-				}
-				if(playerQuests[i][5] >= playerQuests[i][4]) {
-					localPlayer.questCompleted(i);
-				}
-				//break; - auskommentiert, denn wenn es z.B. 2 Kill-Bat-Quests gibt, wird nur die erste geupdated
-			}
+function updateItem(data) {
+	var item = itemById(data.item.id);
+	
+	if(item) {
+		if(data.remove) {
+			items.splice(items.indexOf(data.item), 1);
 		}
 	}
-	for(var i=0; i<items.length; i++) {
-		if(items[i][0] == data.x && items[i][1] == data.y) {
-			items.splice(i, 1);
-			break;
-		}
+	else if (!data.remove) {
+		items.push(data.item);
 	}
 };
 
-function onNewItem(data) {
-	var item = [data.x, data.y, data.type];
-	items.push(item);
-};
+function getItem(data) {
+	localPlayer.takeItem(data.item, data.quantity);
+	updateInventory();
+	displayStats();
+}
 
 function onUpdateWorld(data) {
 	renderMap[data.x][data.y] = data.id;
 };
 
 function onPlayerHurt(data) {
-	if(data.id == localPlayer.getID()) {
+	if(data.id == localPlayer.id) {
 		localPlayer.getHurt(data.amount);
-		localPlayer.displayStats();
+		displayStats();
 	}
 };
 
-function onPlayerDead(data) {
+function updateQuest(data) {
+	questlist.push(data);
+}
 
-};
+function updateEnemy(data) {
+	var enemy = getEnemyById(data.enemy.id);
+	
+	if(enemy) {
+		enemies[data.enemy.id] = data.enemy;
 
-function onEnemyHurt(data) {
-	enemies[data.enemyID].getHurt(data.amount);
-	if(data.enemyID == localPlayer.enemyID()) {
-		localPlayer.playSwordSound();
-		enemies[data.enemyID].displayStats(ctx);
-	}
-};
-
-var tellCounter = 0;
-function onEnemyDead(data) {
-	enemies[data.enemyID].killed();
-	if(data.enemyID == localPlayer.enemyID()) {
-		lastClicked = {x: null, y: null};
-		localPlayer.setGoAttack(false);
-		localPlayer.addXP(data.xp);
-		tellCounter = 0;
-
-		// Check if player had a killing quest
-		var playerQuests = localPlayer.playerQuests();
-		for(var i = 0; i < playerQuests.length; i += 1) {
-			console.log("playerQuests[i][2] = "+playerQuests[i][2]+", playerQuests[i][3] = "+playerQuests[i][3]+", data.type = "+data.type);
-			if(playerQuests[i][2] == 0 && playerQuests[i][3] == data.type) {
-				if(playerQuests[i][5] < playerQuests[i][4]) {
-					localPlayer.updateQuest(i, 1);
-				}
-				if(playerQuests[i][5] >= playerQuests[i][4]) {
-					localPlayer.questCompleted(i);
-				}
-				//break; - auskommentiert, denn wenn es z.B. 2 Kill-Bat-Quests gibt, wird nur die erste geupdated
+		if (data.amount) {
+			if (data.enemy.id == localPlayer.fighting) {
+				localPlayer.playSwordSound();
+				displayEnemyStats(data.enemy.id);
 			}
 		}
+		
+		if(data.enemy.currhp <= 0) {
+			tellCounter = 0;
+			renderMap[data.enemy.x / 32][data.enemy.y / 32] = 0;
+			
+			if (data.enemy.id == localPlayer.fighting) {
+				lastClicked = {x: null, y: null};
+				localPlayer.setGoFight(null);
+				localPlayer.addXP(data.xp);
+				displayStats();
+				localPlayer.updateQuest(data.enemy.type, 1);
+			}
+		}
+		else {
+			renderMap[data.enemy.x / 32][data.enemy.y / 32] = 1;
+		}
 	}
-	renderMap[data.x][data.y] = data.id;
-};
+	else {
+		enemies.push(data.enemy);
+		renderMap[data.enemy.x / 32][data.enemy.y / 32] = 1;
+	}
+}
 
-function onNewRemotePlayer(data) {
-	// Initialise new remote player
-	var newPlayer = new Player(data.absX, data.absY, data.playerName, data.currhp, data.id, "remote");
-	newPlayer.setWorldData(tileSize, worldSize);
-	console.log(data.id+" connected");
+function updatePlayer(data) {
+	var player = playerById(data.id);
+	
+	if(player) {
+		// Update player position
+		player.pos.x = data.pos.x;
+		player.pos.y = data.pos.y;
+		player.dir = data.dir;
+	}
+	else {
+		if(localPlayer && data.id == localPlayer.id) {
+			// Something
+		}
+		else {
+			// Initialise new remote player
+			var newPlayer = new Player(data.pos.x, data.pos.y, data.name, data.currhp, data.id, data.dir);
+			newPlayer.tileSize = tileSize;
 
-	// Add new player to the remote players array
-	remotePlayers.push(newPlayer);
-};
+			// Add new player to the remote players array
+			remotePlayers.push(newPlayer);
+		}
+	}
+}
 
 function onCreateLocalPlayer(data) {
-	localPlayer = new Player(data.x, data.y, data.playerName, data.currhp, data.id, "local");
-	localPlayer.setDir(data.dir);
-	localPlayer.setBgPos(data.canvasXnull, data.canvasYnull);
-	localPlayer.setAbsPos(data.absX, data.absY);
-	localPlayer.displayStats();
-	localPlayer.initInventory();
-	localPlayer.setWorldData(tileSize, worldSize);
+	localPlayer = new Player(data.pos.x, data.pos.y, data.name, data.currhp, data.id, data.dir);
+	localPlayer.tileSize = tileSize;
+	displayStats();
 	initInventory();
 	initMap();
-	$("#gameContainer").removeClass("hideClass");
+	playerName.innerHTML = data.name;
 	animate();
-	console.log("Localplayer created");
 };
 
 function initInventory() {
-	var inventoryMax = localPlayer.getInventoryMax();
-
-	for(var i = 0; i < inventoryMax; i += 1) {
-		$("#inventoryContainer").append('<div id="box'+i+'" class="invBox"></div>');
+	for(var i = 0; i < localPlayer.inventoryMax; i++) {
+		$("#inventoryContainer").append('<div id="box'+i+'" class="invBox" value="'+i+'"></div>');
 		$('#box'+i).append('<div id="box'+i+'index" class="invBoxIndex"></div>');
 		$('#box'+i).click(function() {
 			localPlayer.useItem(this);
+			updateInventory();
+			displayStats();
+		});
+		$('#box'+i).hover(function() {
+			showItemDetails($(this).attr('value'), $(this).offset().left, $(this).offset().top);
+		}, function() {
+			$("#details").addClass("hidden");
 		});
 	}
-	console.log("Inventory initialized");
-};
+}
+
+function showItemDetails(index, x, y) {
+	var inventory = localPlayer.inventory;
+	
+	if(!inventory[index]) {
+		return;
+	}
+	
+	$("#details").removeClass("hidden");
+	
+	$("#details").css({
+		left: x + 50,
+		top: y + 50
+	});
+
+	details.innerHTML = inventory[index].item.desc;
+}
 
 function initMap() {
 	// Draw World
-
-	var playerAbs = localPlayer.getAbsPos();
-
-	var worldRight = worldSize * tileSize;
-	var worldBottom = worldSize * tileSize;
-
 	var spriteNum = 0;
-	for (var w=0; w < worldSize; w++)
-	{
-		for (var h=0; h < worldSize; h++)
-		{
+	for (var w = 0; w < worldSize; w++) {
+		for (var h = 0; h < worldSize; h++) {
 			// Don't draw enemies
 			if(renderMap[w][h] == 1) {
 				spriteNum = 0;
@@ -371,269 +333,176 @@ function initMap() {
 			else {
 				spriteNum = renderMap[w][h];
 			}
-			bgCtx.drawImage(spritesheet, spriteNum*tileSize, 0, tileSize, tileSize, w*tileSize, h*tileSize, tileSize, tileSize);
+			bgCtx.drawImage(spritesheet, spriteNum * tileSize, 0, tileSize, tileSize, w * tileSize, h * tileSize, tileSize, tileSize);
 		}
 	}
-	console.log("Map initialized");
 };
 
-var sayMode;
-var chatTo;
-function localMessage(e) {
-	if(e.keyCode == 13) {
-		if(this.value) {
-			var text = this.value;
-			if(text.charAt(0) == "#") {
-				if(text.charAt(1) == "s") {
-					sayMode = "s";
-					chatTo = null;
-					text = text.substring(3);
-				}
-				else if(text.charAt(1) == "w") {
-					sayMode = "w";
-					chatTo = text.substring(3, text.indexOf(' ', 3));
-					text = text.substring(text.indexOf(' ', 3));
-				}
-				else if(text.charAt(1) == "n") {
-					sayMode = "n";
-					chatTo = null;
-					text = text.substring(3);
-				}
+function sendMessage() {
+	var text = chatInput.value;
+	var sayMode;
+	var chatTo = null;
+
+	if(text) {
+		if(text.charAt(0) == "#") {
+			if(text.charAt(1) == "s") {
+				sayMode = "s";
+				text = text.substring(3);
 			}
-			socket.emit("new message", {mode: sayMode, text: text, chatTo: chatTo});
-			onNewMessage({mode: sayMode, text: text, player: "Ich"});
+			else if(text.charAt(1) == "w") {
+				sayMode = "w";
+				chatTo = text.substring(3, text.indexOf(' ', 3));
+				text = text.substring(text.indexOf(' ', 3));
+			}
+			else if(text.charAt(1) == "n") {
+				sayMode = "n";
+				text = text.substring(3);
+			}
 		}
-		$("#message").blur();
+		socket.emit("new message", {mode: sayMode, text: text, chatTo: chatTo});
 	}
+	chatInput.value = "";
 }
 
-var chatTxtClr = "#c96";
-var pColor = "green";
-function onNewMessage(data) {
-	if(data.player == "Ich") {
-		pColor = "green";
-	}
-	else {
-		pColor = "lightblue";
-	}
+function receiveMessage(data) {
+	var pColor = (data.player == localPlayer.name) ? "#CD96CD" : "#96CDCD";
+
 	switch(data.mode) {
 		case "s":
 			chatTxtClr = "yellow";
-		break;
+			break;
 		case "w":
-			chatTxtClr = "lightblue";
-		break;
+			chatTxtClr = "red";
+			break;
 		default:
-			chatTxtClr = "#c96";
-		break;
+			chatTxtClr = "white";
 	}
-	console.log("chatTxtClr: "+chatTxtClr);
-	$(".text .mCSB_container").append("<span style='color: "+pColor+";'>"+data.player+": </span>"+"<span style='color: "+chatTxtClr+";'>"+data.text+"</span></br>");
-	$(".text").mCustomScrollbar("update");
-	$(".text").mCustomScrollbar("scrollTo","bottom");
-	$("#message").val('');
+
+	simpleScroll.append("<span style='color: "+pColor+";'>"+data.player+": </span>"+"<span style='color: "+chatTxtClr+";'>"+data.text+"</span></br>");
 }
 
 function logout() {
-	socket.emit("logout", {id: localPlayer.getID()});
-	console.log("Player "+localPlayer.getID()+" logged out");
-	socket.emit("disconnect");
+	socket.emit("logout");
 	window.location = "login.html";
 }
 
-document.onkeyup = function(e)
-{
-	if(!$("#message").is(":focus")) {
+document.onkeyup = function(e) {
+	if(e.target.id != "chatInput") {
 		// M for map
-		if(e.keyCode == 77) {
+		if(e.keyCode == 77) { // M
 			toggleMap();
 		}
-		else if(e.keyCode == 81) {
+		else if(e.keyCode == 81) { // Q
 			toggleQuests();
 		}
 		// Quick access to the inventory, numbers 1 - 9
 		else if(e.keyCode > 48 && e.keyCode < 58) {
 			localPlayer.useItem($("#box"+(e.keyCode-48-1)));
+			updateInventory();
 		}
 		// Show chat-input-prompt on "Return"
 		else if(e.keyCode == 13) {
-			if($("#input").hasClass("hideClass")) {
-				$("#input").removeClass("hideClass");
-				$("#message").focus();
-			}
-			else {
-				$("#message").blur();
-				$("#input").addClass("hideClass");
-			}
+			$("#chatInput").focus();
 		}
 	}
 }
 
-function getClickedTile(e, bgPos) {
+function getClickedTile(e) {
 	var x = e.pageX - $("#gameArea").position().left - canvas.offsetLeft;
 	var y = e.pageY - $("#gameArea").position().top - canvas.offsetTop;
-	x = Math.floor((x - bgPos.x)/tileSize);
-	y = Math.floor((y - bgPos.y)/tileSize);
+	x = Math.floor((x - bgPos.x) / tileSize);
+	y = Math.floor((y - bgPos.y) / tileSize);
 	return {x: x, y: y};
 }
 
-function setGameClickHandler() {
-$("#gameArea").click(function(e)
-{
-	var bgPos = localPlayer.getBgPos();
-	var tile = getClickedTile(e, bgPos);
-
-	var absPos = localPlayer.getAbsPos();
+gameArea.onclick = function(e) {
+	var tile = getClickedTile(e);
 
 	// To avoid a bug, where player wouldn't walk anymore, when clicked twice on the same tile
-	if(!(tile.x == lastClicked.x && tile.y == lastClicked.y) &&
-	!(tile.x*32 == absPos.absX && tile.y*32 == absPos.absY)) {
+	if (!(tile.x == lastClicked.x && tile.y == lastClicked.y) &&
+		!(tile.x * 32 == localPlayer.pos.x && tile.y * 32 == localPlayer.pos.y))
+	{
+		$("#conversation, #confirmation").addClass("hidden");
 		lastClicked = tile;
 		// Going to talk to NPC
 		if(collisionMap[tile.x][tile.y] == 2) {
 			lastClicked = {x: null, y: null};
-			for(var i = 0; i < npcs.length; i += 1) {
-				if(tile.x*32 == npcs[i].getX() && tile.y*32 == npcs[i].getY()) {
-					if(npcs[i].hasQuest()) {
-						console.log("NPC "+i+" has Quest!")
-						var playerQuests = localPlayer.playerQuests();
-						var found = false;
-						for(var j = 0; j < playerQuests.length; j += 1) {
-							if(npcs[i].getQuestID() == playerQuests[j][0]) {
-								console.log("QuestID: "+playerQuests[j][0]);
-								// Player has NPCs quest
-								localPlayer.talkToNPC(quests.getQuestConv(playerQuests[j][0], playerQuests[j][1]));
-								if(playerQuests[j][1] == 2 && !playerQuests[j][8]) {
-									// Player completed the Quest and wants to be rewarded
-									console.log("Player wants to be rewarded for Quest "+j);
-									localPlayer.rewardQuest(j);
-								}
-								found = true;
-								break;
-							}
-						}
-						// Player hasn't NPCs quest yet
-						if(!found) {
-							console.log("New Quest, get conversation: "+npcs[i].getQuestID());
-							localPlayer.talkToNPC(quests.getQuestConv(npcs[i].getQuestID(), 0));
-							var newQuest = quests.getQuest(npcs[i].getQuestID());
-							localPlayer.questConfirmationPending(npcs[i].getQuestID(), 1, newQuest[1], newQuest[2], newQuest[3], 0, newQuest[4], newQuest[5], newQuest[0]);
-						}
-					}
-					else {
-						localPlayer.talkToNPC(npcs[i].getConversation(i));
-					}
-					localPlayer.setGoToNpc(true);
-					break;
-				}
+			var npc = getNpcAt(tile.x * 32, tile.y * 32);
+
+			if(npc.questID != null) {
+				var quest = questlist[npc.questID];
+				localPlayer.addQuest(quest);
 			}
+			
+			localPlayer.setGoToNpc(npc);
 		}
 		// Going to attack enemy
 		else if(collisionMap[tile.x][tile.y] == 1) {
-			for(var i=0; i<enemies.length; i++) {
-				if(enemies[i].isAlive() && tile.x*32 == enemies[i].getX() && tile.y*32 == enemies[i].getY()) {
-					localPlayer.setGoAttack(true);
-					localPlayer.setEnemyID(i);
-					socket.emit("start fight", {id: localPlayer.getID(), enemyID: i});
+			for(var i = 0; i < enemies.length; i++) {
+				if(enemies[i].alive && tile.x * 32 == enemies[i].x && tile.y * 32 == enemies[i].y) {
+					localPlayer.setGoFight(i);
 					break;
 				}
 			}
-			localPlayer.setGoToNpc(false);
 		}
 		else {
-			if(localPlayer.isFighting()) {
-	
-				localPlayer.setGoAttack(false);
+			if(localPlayer.fighting != null) {
 				tellCounter = 0;
-				socket.emit("abort fight", {id: localPlayer.getID()});
+				socket.emit("abort fight", {id: localPlayer.id});
 			}
-			localPlayer.setGoToNpc(false);
+			localPlayer.justWalk();
 		}
-		localPlayer.setMoveInterrupt(true);
+		localPlayer.stop = true;
 
 		// Wait for the player to stop at next tile
 		var timer = setInterval(function() {
-			if(!localPlayer.isMoving()) {
+			if(!localPlayer.moving) {
 				clearTimeout(timer);
-				localPlayer.setMoveInterrupt(false);
-				var pathStart = [absPos.absX/tileSize, absPos.absY/tileSize];
+				localPlayer.stop = false;
+				var pathStart = [localPlayer.pos.x / tileSize, localPlayer.pos.y / tileSize];
 
 				// Calculate path
 				var path = Pathfinder(collisionMap, pathStart, tile);
-				//console.log("path.length: "+path.length);
 				if(path.length > 0) {
 					localPlayer.setPath(path);
 				}
 			}
 		}, 1);
 	}
-})
-}
+};
 
 // Browser window resize
 function onResize(e) {
-	// Maximise the canvas
-	//canvas.width = window.innerWidth;
-	//canvas.height = window.innerHeight;
+	$('#gameArea').css({
+		left: ($(window).width() - $('#gameArea').width())/2,
+		top: ($(window).height() - $('#gameArea').height())/2
+	});
+	$('#questMenu').css({
+		left: ($(window).width() - $('#questMenu').width())/2,
+		top: ($(window).height() - $('#questMenu').height())/2
+	});
+	
+	adjustedTileSize = Math.floor(window.innerHeight / worldSize);
+	$('#mapCanvas').css({
+		left: ($(window).width() - adjustedTileSize * worldSize)/2,
+		top: ($(window).height() - adjustedTileSize * worldSize)/2,
+		width: adjustedTileSize * worldSize,
+		height: adjustedTileSize * worldSize
+	});
 
-		$('#gameArea').css({
-			left: ($(window).width() - $('#gameArea').outerWidth())/2,
-			top: ($(window).height() - $('#gameArea').outerHeight())/2
-		});
-		$('#input').css({
-			left: ($(window).width() - $('#input').outerWidth())/2,
-			top: ($(window).height() - $('#input').outerHeight())/1.2
-		});
-		$('#questMenu').css({
-			left: ($(window).width() - $('#questMenu').outerWidth())/2,
-			top: ($(window).height() - $('#questMenu').outerHeight())/2
-		});
+	$('#conversation, #confirmation').css({
+		top: $("#gameArea").offset().top + $("#gameArea").height() - $("#confirmation").height() - 50,
+		left: ($("#gameArea").width() - $('#conversation').width()) / 2 + ($(window).width() - $("#gameArea").width()) / 2,
+	});
 
-		$('#confirmation').css({
-			left: ($(window).width() - $('#conversation').outerWidth())/2,
-		});
-		adjustedTileSize = Math.floor(window.innerHeight/worldSize);
-		$('#mapCanvas').css({
-			left: ($(window).width() - adjustedTileSize * worldSize)/2,
-			top: ($(window).height() - adjustedTileSize * worldSize)/2,
-			width: adjustedTileSize * worldSize,
-			height: adjustedTileSize * worldSize
-		});
-		$('#conversation').css({
-			left: ($(window).width() - $('#conversation').outerWidth())/2,
-		});
-		mapCanvas.width = adjustedTileSize * worldSize;	
-		mapCanvas.height = adjustedTileSize * worldSize;
-		if(showMap) {
-			drawMap();
-		}
+	mapCanvas.width = adjustedTileSize * worldSize;	
+	mapCanvas.height = adjustedTileSize * worldSize;
 };
 
 // Socket connected
 function onSocketConnected() {
 	// Tell game server client connected
-	//socket.emit("player connected", {playerName: pName});
-	socket.emit("player connected", {playerName: sessionStorage.playerName});
-	console.log(pName+" connected to socket server");
-};
-
-// Socket disconnected
-function onSocketDisconnect() {
-	//window.location = "login.html";
-};
-
-// Move player
-function onMovePlayer(data) {
-	var movePlayer = playerById(data.id);
-
-	// Player not found
-	if (!movePlayer) {
-		console.log("MovePlayer - Player not found: "+data.id);
-		return;
-	};
-	// Update player position
-	movePlayer.setAbsPos(data.x, data.y);
-	movePlayer.setDir(data.dir);
+	socket.emit("player connected", {name: sessionStorage.playerName});
 };
 
 // Remove player
@@ -642,7 +511,6 @@ function onRemovePlayer(data) {
 
 	// Player not found
 	if (!removePlayer) {
-		console.log("RemovePlayer - Player not found: "+data.id);
 		return;
 	};
 
@@ -650,130 +518,288 @@ function onRemovePlayer(data) {
 	remotePlayers.splice(remotePlayers.indexOf(removePlayer), 1);
 };
 
-// New Enemy
-function onNewEnemy(data) {
-	var newEnemy = new Enemy(data.x, data.y, data.id);
-	enemies.push(newEnemy);
-};
-
-function onRespawnEnemy(data) {
-	enemies[data.id].setAlive();
-	renderMap[data.x][data.y] = data.type;
-};
-
-
-/**************************************************
-** GAME ANIMATION LOOP
-**************************************************/
-var lastRender = Date.now();
-var lastFpsCycle = Date.now();
+// GAME ANIMATION LOOP
 function animate() {
-	var delta = (Date.now() - lastRender)/1000;
+	var delta = (Date.now() - lastRender) / 1000;
 	update(delta);
 	lastRender = Date.now();
 	draw();
 
 	if(Date.now() - lastFpsCycle > 1000) {
 		lastFpsCycle = Date.now();
-		var fps = Math.round(1/delta);
+		var fps = Math.round(1 / delta);
 		$("#fps").html("FPS: "+fps);
 	}
 	// Request a new animation frame using Paul Irish's shim
 	window.requestAnimFrame(animate);
 };
 
-
-/**************************************************
-** GAME UPDATE
-**************************************************/
+// GAME UPDATE
 function update(dt) {
-	if(localPlayer.isMoving()) {
-		var pos = localPlayer.getPos();
-		var absPos = localPlayer.getAbsPos();
-		var bgPos = localPlayer.getBgPos();
+	if (localPlayer.moving || (localPlayer.fighting != null && tellCounter == 0)) {
 		localPlayer.playerMove(dt);
-		socket.emit("move player", {id: localPlayer.getID(), x: pos.x, y: pos.y, absX: absPos.absX, absY: absPos.absY, dir: localPlayer.getDir(), canvasX: bgPos.x, canvasY: bgPos.y});
+		socket.emit("update player", {id: localPlayer.id, x: localPlayer.pos.x, y: localPlayer.pos.y, dir: localPlayer.dir, enemyID: localPlayer.fighting});
+		tellCounter++;
 	}
-	if(localPlayer.isFighting()) {
-		if(tellCounter == 0) {
-			socket.emit("in fight", {id: localPlayer.getID(), enemyID: localPlayer.enemyID()});
-			tellCounter++;
-		}
+	else if (localPlayer.talkingTo != null && $("#conversation").hasClass("hidden")) {
+		showConversation();
 	}
 };
 
-
-/**************************************************
-** GAME DRAW
-**************************************************/
+// GAME DRAW
 var draw = function() {
-	// Move Background if necessary4
-	var bgPos = localPlayer.getBgPos();
-	if(parseInt(document.getElementById("bgDiv").style.marginLeft) != bgPos.x) {
-		document.getElementById("bgDiv").style.marginLeft = bgPos.x + "px";
-	}
-	if(parseInt(document.getElementById("bgDiv").style.marginTop) != bgPos.y) {
-		document.getElementById("bgDiv").style.marginTop = bgPos.y + "px";
-	}
+	// Move Background if necessary
+	bgPos.x = (localPlayer.pos.x >= 320 && localPlayer.pos.x < worldSize * tileSize - 320) ? -1 * (localPlayer.pos.x - 320) : bgPos.x;
+	bgPos.x = (bgPos.x > 0) ? 0 : bgPos.x;
+	bgPos.y = (localPlayer.pos.y >= 320 && localPlayer.pos.y < worldSize * tileSize - 320) ? -1 * (localPlayer.pos.y - 320) : bgPos.y;
+	bgPos.y = (bgPos.y > 0) ? 0 : bgPos.y;
+
+	bgDiv.style.marginLeft = bgPos.x + "px";
+	bgDiv.style.marginTop = bgPos.y + "px";
+
 	// Wipe the canvas clean
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	// Draw World
-	var worldRight = worldSize * tileSize;
-	var worldBottom = worldSize * tileSize;
-
 	// Draw enemies
 	for (var i = 0; i < enemies.length; i++) {
-		if(enemies[i].isAlive()) {
-			enemies[i].draw(ctx, bgPos.x, bgPos.y);
+		if(enemies[i].alive) {
+			drawEnemy(i);
 		}
 	}
 
 	// Draw remote players
 	for (var i = 0; i < remotePlayers.length; i++) {
-		remotePlayers[i].draw(ctx, bgPos.x, bgPos.y);
+		drawPlayer(remotePlayers[i]);
 	};
 
 	// Draw local player
-	localPlayer.draw(ctx, bgPos.x, bgPos.y);
+	drawPlayer(localPlayer);
 
 	// Draw items
 	for (var i = 0; i < items.length; i++) {
-			ctx.drawImage(itemsprites, items[i][2]*44, 0, 44, 44, items[i][0]+bgPos.x, items[i][1]+bgPos.y, 32, 32);
+		ctx.drawImage(itemsprites, (items[i].type - 10) * 44, 0, 44, 44, items[i].x + bgPos.x, items[i].y + bgPos.y, 32, 32);
 	}
 
 	// Draw npcs
 	for (var i = 0; i < npcs.length; i++) {
-			npcs[i].draw(ctx, bgPos.x, bgPos.y);
+		ctx.drawImage(npcsprite, 44, 0, 44, 44, npcs[i].x + bgPos.x, npcs[i].y + bgPos.y, 32, 32);
 	}
 
 	// If player is in fight, display stats of enemy
 	if(localPlayer.isGoingToFight()) {
-		var enemy = enemies[localPlayer.enemyID()];
-		var value = localPlayer.isFighting();
-		if(enemy.isAlive() && $("#enemyLevel").hasClass('hideClass')) {
-			enemy.displayStats();
+		var enemy = enemies[localPlayer.isGoingToFight()];
+		var value = localPlayer.fighting;
+		if(enemy.alive && $("#enemyLevel").hasClass('hidden')) {
+			displayEnemyStats(localPlayer.isGoingToFight());
 		}
 	}
-	else if(!$("#enemyLevel").hasClass('hideClass')) {
-		$("#enemyLevel").addClass('hideClass');
-		$("#enemyName").addClass('hideClass');
-		$("#enemyHeart").addClass('hideClass');
-		$("#enemyHealthBorder").addClass('hideClass');
-		$("#enemyHealth").addClass('hideClass');
+	else if(!$("#enemyLevel").hasClass('hidden')) {
+		$("#enemyLevel, #enemyName, #enemyHeart, #enemyHealthBox, #enemyHealth").addClass('hidden');
 	}
 };
 
-/**************************************************
-** GAME HELPER FUNCTIONS
-**************************************************/
-// Find player by ID
+// Helper
 function playerById(id) {
 	for (var i = 0; i < remotePlayers.length; i++) {
-		if (remotePlayers[i].getID() == id) {
+		if (remotePlayers[i].id == id) {
 			return remotePlayers[i];
 		}
 	};
 	
 	return false;
 };
+
+function npcById(id) {
+	for (var i = 0; i < npcs.length; i++) {
+		if (npcs[i].id == id) {
+			return npcs[i];
+		}
+	};
+}
+
+function itemById(id) {
+	for (var i = 0; i < items.length; i++) {
+		if (items[i].id == id) {
+			return items[i];
+		}
+	};
+	
+	return false;
+};
+
+function getNpcAt(x, y) {
+	for(var i = 0; i < npcs.length; i += 1) {
+		if(x == npcs[i].x && y == npcs[i].y) {
+			return npcs[i];
+		}
+	}
+}
+
+function getEnemyById(id) {
+	for(var i = 0; i < enemies.length; i++) {
+		if(id == enemies[i].id) {
+			return enemies[i];
+		}
+	}
+}
+
+function updateInventory() {
+	for(var i = 0; i < localPlayer.inventoryMax; i++) {
+		$("#box"+i).css('background', '');
+		$('#box'+i+'index').html('');
+	}
+	
+	for(var i = 0; i < localPlayer.inventory.length; i++) {
+		var type = localPlayer.inventory[i].item.type;
+		
+		var itemPath = "healthPotion.png";
+		$('#box'+i).css({backgroundImage: 'url(sprites/' + itemPath + ')'});
+		$('#box'+i+'index').html(localPlayer.inventory[i].quantity);
+	}
+}
+
+function displayStats() {
+	// Health
+	$("#health").width(((localPlayer.currhp / localPlayer.maxhp) * 100) + "%");
+	$("#coins").html(localPlayer.money);
+	$("#playerLevel").html(localPlayer.level);
+
+	// Experience
+	var expWidth = 100; // 150 * ((localPlayer.xp - stats.xpForLevel(localPlayer.level - 1)) / (stats.xpForLevel(stats.level) - stats.xpForLevel(stats.level - 1))) + "px";
+	$("#playerXP").width(expWidth);
+}
+
+function displayEnemyStats(id) {
+	var enemy = enemies[id];
+	// Level
+	$("#enemyLevel").removeClass('hidden');
+	$("#enemyLevel").html(enemy.level);
+
+	// Health
+	var width = 146 * (enemy.currhp / enemy.maxhp) + "px";
+	$("#enemyHeart, #enemyName, #enemyHealthBox").removeClass('hidden');
+	$("#enemyHealth").removeClass('hidden').width(width);
+}
+
+function drawEnemy(id) {
+	var enemy = enemies[id];
+	ctx.fillStyle = "#00F";
+	ctx.strokeStyle = "#F00";
+	ctx.font = "10pt Arial";
+	var sprite = new Image();
+	sprite.src = 'sprites/spritesheet.png';
+	ctx.drawImage(sprite, 32, 0, 32, 32, enemy.x + bgPos.x, enemy.y + bgPos.y, 32, 32);
+
+	var hitDelta = Date.now() - enemy.lastHitPointUpdate;
+
+	if (enemy.hitArray.length > 0 && hitDelta > 50) {
+		for(var i = 0, j = enemy.hitArray.length; i < j; i+=1) {
+			if(enemy.hitArray[i] != null) {
+				enemy.lastHitPointUpdate = Date.now();
+				enemy.hitArray[i][1] = Math.round((enemy.hitArray[i][1]-0.1)*10)/10;
+	
+				if(enemy.hitArray[i][1] <= 0) {
+					//gotHit = false;
+					enemy.hitArray.splice(i,1);
+				}
+			}
+		}
+	}
+	else if (enemy.hitArray.length == 0) {
+		enemy.gotHit = false;
+	}
+
+	if(enemy.hitArray.length > 0) {
+		for(var i = 0, j = enemy.hitArray.length; i < j; i+=1) {
+			ctx.fillStyle = 'rgba(0,255,0,'+enemy.hitArray[i][1]+')';//"#F00";
+			ctx.strokeStyle = "#F00";
+			ctx.font = "14pt Minecraftia";
+			ctx.fillText(enemy.hitArray[i][0], enemy.x + bgPos.x + 12, enemy.y + bgPos.y - 20);
+		}
+	}
+}
+
+function drawPlayer(player) {
+	if(player.moving && (Date.now() - player.lastFrameUpdate > 150)) {
+		player.lastFrameUpdate = Date.now();
+		player.frame = (this.frame < 3) ? player.frame + 1 : 0;
+	}
+	else if(!player.moving) {
+		player.frame = 0;
+	}
+
+	ctx.fillStyle = "#000";
+	ctx.font = "0.75rem aaargh bold";
+	ctx.fillText(player.name, player.pos.x + bgPos.x, player.pos.y + bgPos.y - 10);
+	ctx.drawImage(playersprite, player.frame * 42, player.dir * 43, 42, 43, player.pos.x + bgPos.x, player.pos.y + bgPos.y, 32, 32);
+
+	var hitDelta = Date.now() - player.lastHitPointUpdate;
+	
+	if(player.hitArray.length > 0 && hitDelta > 50) {
+		for(var i = 0; i < player.hitArray.length; i++) {
+			if(player.hitArray[i] != null) {
+				player.lastHitPointUpdate = Date.now();
+				player.hitArray[i][1] = Math.round((player.hitArray[i][1] - 0.1) * 10) / 10;
+		
+				if(player.hitArray[i][1] <= 0) {
+					player.hitArray.splice(i,1);
+				}
+			}
+		}
+	}
+	else if(player.hitArray.length == 0) {
+		player.gotHit = false;
+	}
+
+	if(player.hitArray.length > 0) {
+		for(var i = 0; i < player.hitArray.length; i++) {
+			ctx.fillStyle = 'rgba(255,0,0,' + player.hitArray[i][1] + ')';
+			ctx.font = "14pt Minecraftia";
+			ctx.fillText(player.hitArray[i][0], player.pos.x + 12, player.pos.y - 20);
+		}
+	}
+}
+
+function showConversation() {
+	$("#conversation").removeClass("hidden");
+	var npc = npcById(localPlayer.talkingTo);
+	var convData = localPlayer.getConversation(npc);
+
+	if (!convData.text) {
+		if(localPlayer.pendingQuest) {
+			$("#confirmation").removeClass("hidden");
+		}
+		else {
+			localPlayer.talkingTo = null;
+			$("#conversation").addClass("hidden");
+		}
+	}
+
+	else {
+		if(convData.sec == 2) {
+			var quest = questlist[npc.questID];
+			localPlayer.takeItem({type: quest.itemReward, desc: "Description"}, 1);
+			localPlayer.takeItem({type: 11}, quest.coinReward);
+			updateInventory();
+			displayStats();
+		}
+	
+		convText.innerHTML = convData.text;
+	}
+}
+
+convButton1.onclick = function() {
+	showConversation();
+}
+
+yes.onclick = function() {
+	localPlayer.confirmQuest();
+	$("#confirmation").addClass("hidden");
+	$("#conversation").addClass("hidden");
+}
+
+no.onclick = function() {
+	localPlayer.declineQuest();
+	$("#confirmation").addClass("hidden");
+	$("#conversation").addClass("hidden");
+}

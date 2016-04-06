@@ -1,13 +1,9 @@
 $(window).resize(function(){
-	$('#loginBox').css({
-		position:'absolute',
-		left: ($(window).width() - $('#loginBox').outerWidth())/2,
-		top: ($(window).height() - $('#loginBox').outerHeight())/2
-	});
-	$('#idForm').css({
-		position:'absolute',
-		left: ($('#loginBox').width() - $('#idForm').outerWidth())/2,
-		top: ($('#loginBox').height() - $('#idForm').outerHeight())/2
-	});
+	$("#login").css('left', ((window.innerWidth - $("#login").width() - 64) / 2) + "px");
 });
 $(window).resize();
+
+function login() {
+	sessionStorage.playerName = user.value;
+	window.location = 'index.html';
+}
