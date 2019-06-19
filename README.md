@@ -1,7 +1,39 @@
-# Setup
+# MMORPG
+An MMORPG based on NodeJS, MongoDB and WebSockets
 
-1. sudo apt-get install nodejs mongodb npm
-3. cd <game_dir>
-4. sudo npm install -d (this installs express, socket.io and mongodb)
-5. In a browser, go to: localhost:8000
-6. nodejs game.js
+## Prerequisites
+Install Linux packages
+```
+sudo apt install curl mongodb
+```
+
+Install NodeJS
+```
+curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+```
+
+```
+sudo apt-get install -y nodejs
+```
+
+Start MongoDB
+```
+sudo service mongodb start
+```
+
+Move into project folder
+```
+cd /path/to/mmorpg
+```
+
+Install NodeJS-dependencies
+```
+npm install -d
+```
+
+## Run
+```
+npm start
+```
+
+In a browser, go to: localhost:8000
