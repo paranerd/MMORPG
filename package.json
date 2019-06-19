@@ -1,11 +1,17 @@
 {
 	"name": "MMORPG",
-	"version": "0.0.1",
+	"author": "paranerd",
+	"version": "0.9.0",
 	"private": true,
+	"main": "game.js",
+	"scripts": {
+		"start": "nodejs ./game.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
 	"dependencies": {
-		"express": "~4.9.0",
-		"socket.io": "~1.1.0",
-		"mongojs": "~0.14.1"
+		"express": "^4.9.8",
+		"mongodb": "^3.2.7",
+		"socket.io": "^1.1.0"
 	},
 	"engines": {
 		"node": "0.10.x"

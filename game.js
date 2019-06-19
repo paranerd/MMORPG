@@ -1,15 +1,19 @@
-var util = require("util"),					// Utility resources (logging, object inspection, etc)
+let util = require("util"), // Utility resources (logging, object inspection, etc)
 	express = require('express'),
 	app = express(),
 	port = 8000,
-	Player = require("./Player").Player,	// Player class
-	Enemy = require("./Enemy").Enemy,	// Enemy class
+	io = require('socket.io').listen(app.listen(port)),
+	MongoClient = require('mongodb').MongoClient,
+	Player = require("./Player").Player, // Player class
+	Enemy = require("./Enemy").Enemy, // Enemy class
 	Level = require("./Level").Level,
-	Item = require("./Item").Item,	// Player class
-	db = require('mongojs').connect('localhost/mongoapp', ['users']),
+	Item = require("./Item").Item, // Player class
 	Npc = require("./Npc").Npc,
+	mongoUrl = 'mongodb://localhost:27017/mmorpg',
+	dbConnection,
+	db,
 	quests = require("./questlist").questlist,
-	socket,		// socket controller
+	socket, // socket controller
 	players = [], // connected players
 	enemies = [],
 	npcs = [],
@@ -20,7 +24,15 @@ var util = require("util"),					// Utility resources (logging, object inspection
 	tileSize;
 
 app.use(express.static(__dirname + '/public'));
-var io = require('socket.io').listen(app.listen(port));
+
+MongoClient.connect(mongoUrl, { useNewUrlParser: true }, function(err, client) {
+	if (err) throw err;
+
+	dbConnection = client;
+	db = client.db('mmorpg');
+
+	//client.close();
+});
 
 function init() {
 	// Initialize the world array
@@ -29,14 +41,14 @@ function init() {
 	tileSize = Level.getTileSize();
 
 	// Create empty collision map and init enemy array
-	var enemyID = 0;
+	let enemyID = 0;
 	for (var x = 0; x < worldSize; x++) {
 		collisionMap[x] = [];
 		for (var y = 0; y < worldSize; y++) {
-			if(world[x][y] == 0) {
+			if (world[x][y] == 0) {
 				collisionMap[x][y] = 0;
 			}
-			else if(world[x][y] == 1) {
+			else if (world[x][y] == 1) {
 				collisionMap[x][y] = 1;
 				var newEnemy = new Enemy(x * tileSize, y * tileSize, enemyID, 20);
 				enemies.push(newEnemy);
@@ -52,7 +64,7 @@ function init() {
 	var npcList = Level.getNpcList();
 
 	// Fill collision map
-	for(var i = 0; i < npcList.length; i += 1) {
+	for (var i = 0; i < npcList.length; i += 1) {
 		var newNpc = new Npc(npcList[i].id, npcList[i].x * tileSize, npcList[i].y * tileSize, npcList[i].name, npcList[i].questID);
 		npcs.push(newNpc);
 		collisionMap[npcList[i].x][npcList[i].y] = 2;
@@ -61,7 +73,7 @@ function init() {
 	setEventHandlers();
 };
 
-// GAME EVENT HANDLERS
+// Game event handlers
 var setEventHandlers = function() {
 	io.sockets.on("connection", onSocketConnection);
 };
@@ -94,16 +106,16 @@ function onSocketConnection(client) {
 
 function onPlayerConnect(data) {
 	var toClient = this;
-	if(!data.name) {
+	if (!data.name) {
 		toClient.emit("no player");
 	}
-	db.users.findOne( { name: data.name }, function(err, savedUser) {
-		if(err || !savedUser) {
+	db.collection('users').findOne( { name: data.name }, function(err, savedUser) {
+		if (err || !savedUser) {
 			toClient.emit("no player");
 
 			var player = new Player(128, 192, data.name, 100);
-			db.users.save(player, function(err2, savedUser2) {
-				if(err2 || !savedUser2) {
+			db.collection('users').insertOne(player, function(err2, savedUser2) {
+				if (err2 || !savedUser2) {
 					// Error occurred
 				}
 				else {
@@ -124,11 +136,11 @@ function joinPlayer(client, name) {
 
 	// Send existing enemies to client
 	for (var i = 0; i < enemies.length; i++) {
-		if(enemies[i].alive) {
+		if (enemies[i].alive) {
 			client.emit("update enemy", {enemy: enemies[i]});
 		}
 	}
-	
+
 	// Send available quests to client
 	for (var i = 0; i < quests.length; i++) {
 		client.emit("update quest", quests[i]);
@@ -150,7 +162,7 @@ function joinPlayer(client, name) {
 	var player = playerByName(name);
 
 	// New Localplayer
-	if(!player) {
+	if (!player) {
 		for (var i = 0; i < players.length; i++) {
 			client.emit("update player", players[i]);
 		};
@@ -184,16 +196,16 @@ function joinPlayer(client, name) {
 
 function onStartFight(data) {
 	var player = playerById(data.id);
-	
-	if(player) {
+
+	if (player) {
 		player.setGoFight(data.enemyID);
 	}
 };
 
 function onAbortFight(data) {
 	var player = playerById(data.id);
-	
-	if(player) {
+
+	if (player) {
 		player.stopFight();
 	}
 }
@@ -201,30 +213,30 @@ function onAbortFight(data) {
 var calculateDamage = function(att, def) {
 	// Math.random() * (max - min + 1) + min;
 	var damage = Math.floor((Math.random()*((att - def) - (att - def - 8))) + (att - def - 8));
-	if(damage < 0) damage = 0;
+	if (damage < 0) damage = 0;
 	return damage;
 }
 
 var fightLoop = setInterval(function() {
 	for (i = 0; i < enemies.length; i++) {
-		if(enemies[i].readyToHit()) {
+		if (enemies[i].readyToHit()) {
 			var player = playerById(enemies[i].fightingAgainst());
-			
-			if(!player) {
+
+			if (!player) {
 				continue;
 			}
-			
+
 			player.getHurt(enemies[i].strength);
 			enemies[i].setLastStrike(Date.now());
 
-			if(!player.alive) {
+			if (!player.alive) {
 				enemies[i].killedPlayer(player.id);
 			}
 			io.sockets.emit("player hurt", {id: player.id, amount: enemies[i].strength});
 			io.sockets.emit("update player", player);
 		}
 
-		else if(!enemies[i].alive && (Date.now() - enemies[i].killTime > enemies[i].respawnTime)) {
+		else if (!enemies[i].alive && (Date.now() - enemies[i].killTime > enemies[i].respawnTime)) {
 			// If player stands on the tile, don't respawn yet (first is for passing tile, second - after || - is for right on the tile
 				for (var j = 0; j < players.length; j++) {
 				if ((players[j].pos.x > enemies[i].x && players[j].pos.x < enemies[i].x + 32 &&
@@ -238,19 +250,19 @@ var fightLoop = setInterval(function() {
 			enemies[i].setAlive();
 			io.sockets.emit("update enemy", {enemy: enemies[i]});
 			world[enemies[i].x / 32][enemies[i].y / 32] = 1;
-			
+
 			var item = getItem(enemies[i].x, enemies[i].y);
-			if(item) {
+			if (item) {
 				io.sockets.emit("update item", {item: item, remove: true});
 				removeItem(enemies[i].x, enemies[i].y);
 			}
 		}
 	}
-	
+
 	for (var j = 0; j < players.length; j++) {
 		var enemyID = players[j].fighting;
 
-		if(players[j].readyToHit() && enemies[enemyID]) {
+		if (players[j].readyToHit() && enemies[enemyID]) {
 			var enemy = enemies[enemyID];
 			var tileX = enemy.x / 32;
 			var tileY = enemy.y / 32;
@@ -259,7 +271,7 @@ var fightLoop = setInterval(function() {
 			enemy.getHurt(damage);
 
 			io.sockets.emit("update enemy", {enemy: enemy, amount: damage});
-			if(!enemy.alive) {
+			if (!enemy.alive) {
 				world[tileX][tileY] = 0;
 
 				players[j].stopFight();
@@ -272,11 +284,11 @@ var fightLoop = setInterval(function() {
 
 function onLogout(data) {
 	var player = playerById(this.id);
-	
-	if(!player) {
+
+	if (!player) {
 		return;
 	}
-	
+
 	this.broadcast.emit("new message", {player: player.name, text: "left the game", mode: "s"});
 	players.splice(this.id, 1);
 	this.broadcast.emit("remove player", {id: this.id});
@@ -290,20 +302,20 @@ function onClientDisconnect(data) {
 
 function onUpdatePlayer(data) {
 	var player = playerById(this.id);
-	
+
 	// Player not found
 	if (!player) {
 		return;
 	};
-	
+
 	// Update player position
 	player.pos.x = data.x;
 	player.pos.y = data.y;
 	player.dir = data.dir;
-	
+
 	// Check if player stepped on an item
 	var item = getItem(player.pos.x, player.pos.y);
-	if(item) {
+	if (item) {
 		io.sockets.emit("update item", {item: item, remove: true}); // TO-DO: only player who got the item should be informed
 		io.sockets.emit("get item", {item: item, quantity: item.quantity});
 		player.takeItem(item.type, item.quantity);
@@ -312,15 +324,15 @@ function onUpdatePlayer(data) {
 
 	// Broadcast updated position to connected socket clients
 	this.broadcast.emit("update player", player);
-	
-	if(data.enemyID != null) {
+
+	if (data.enemyID != null) {
 		player.fighting = data.enemyID;
 		enemies[data.enemyID].startFight(data.id);
 	}
 }
 
 /*var gameLoop = setInterval(function() {
-	for(var i = 0; i < players.length; i++) {
+	for (var i = 0; i < players.length; i++) {
 		io.sockets.emit("update player", {player: players[i]});
 	}
 }, 16);*/
@@ -328,7 +340,7 @@ function onUpdatePlayer(data) {
 function dropItem(x, y) {
 	var chance = Math.round(Math.random() * 100);
 
-	if(chance < 100) {
+	if (chance < 100) {
 		var id = (chance < 40) ? 11 : 10;
 		var quantity = (id == 11 && chance < 40) ? 20 : null;
 
@@ -339,8 +351,8 @@ function dropItem(x, y) {
 };
 
 function getItem(x, y) {
-	for(var i = 0; i < items.length; i++) {
-		if(items[i].x == x && items[i].y == y) {
+	for (var i = 0; i < items.length; i++) {
+		if (items[i].x == x && items[i].y == y) {
 			return items[i];
 		}
 	}
@@ -380,7 +392,7 @@ function playerById(id) {
 			return players[i];
 		}
 	}
-	
+
 	return false;
 }
 
