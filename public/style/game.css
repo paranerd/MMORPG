@@ -6,7 +6,7 @@
 
 @font-face {
 	font-family: "Minecraftia";
-	src: url(../fonts/Minecraftia.ttf);
+	src: url(../fonts/Minecraftia-Regular.ttf);
 	font-size: 8;
 }
 
@@ -553,7 +553,7 @@ Login
 	position: relative;
 	margin-top: 50px;
 	width: 268px;
-	padding: 30px;	
+	padding: 30px;
 	border: none;
 	box-shadow: 0px 0px 30px 3px rgba(0,0,0,0.45);
 	background-color: rgba(0,0,0,0.15);
@@ -601,7 +601,7 @@ Login
 	border: 1px solid rgba(255,255,255,0.25); /*#2e8b5e;*/
 }
 
-.input_wide {	
+.input_wide {
 	height: 40px;
 	width: 100%;
 	padding: 0;
@@ -615,7 +615,7 @@ Login
 	font-weight: 400;
 	margin-bottom: 20px;
 	color: white;
-	
+
 	background-color: rgba(255,255,255,0.05);
 	border: 1px solid rgba(255,255,255,0.3);
 	font-family: aaargh;
