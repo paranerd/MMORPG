@@ -5,8 +5,8 @@
 	"private": true,
 	"main": "game.js",
 	"scripts": {
-		"start": "nodejs ./game.js",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"start": "node ./game.js",
+		"test": "nodemon ./game.js"
 	},
 	"dependencies": {
 		"express": "^4.9.8",
@@ -15,5 +15,8 @@
 	},
 	"engines": {
 		"node": "0.10.x"
+	},
+	"devDependencies": {
+		"nodemon": "^2.0.2"
 	}
 }
